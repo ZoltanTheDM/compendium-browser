@@ -494,6 +494,8 @@ class CompendiumBrowser extends Application {
         let unfoundSpells = '';
         let numItemsLoaded = 0;
         let compactItems = {};
+        const Features = ["feat","class","subclass", "background", "race"];
+        const NotItems = ["spell", "feat","class","subclass", "background", "race"];
 
         try{
             //Filter the full list, but only save the core compendium information + displayed info 
@@ -554,7 +556,7 @@ class CompendiumBrowser extends Application {
 
                                 const decoratedItem = this.decorateItem(item5e);
 
-                                if(decoratedItem && ["feat","class","subclass", "background"].includes(decoratedItem.type) && this.passesFilter(decoratedItem, this.featFilters.activeFilters)){
+                                if(decoratedItem && Features.includes(decoratedItem.type) && this.passesFilter(decoratedItem, this.featFilters.activeFilters)){
                                     itemsList[item5e.id] = {
                                         compendium : pack.collection,
                                         name : decoratedItem.name,
@@ -581,7 +583,7 @@ class CompendiumBrowser extends Application {
 
                                 const decoratedItem = this.decorateItem(item5e);
 
-                                if(decoratedItem && !["spell","feat","class","subclass", "background"].includes(decoratedItem.type) && this.passesFilter(decoratedItem, this.itemFilters.activeFilters)){
+                                if(decoratedItem && !NotItems.includes(decoratedItem.type) && this.passesFilter(decoratedItem, this.itemFilters.activeFilters)){
                                     itemsList[item5e.id] = {
                                         compendium : pack.collection,
                                         name : decoratedItem.name,
@@ -1343,6 +1345,14 @@ class CompendiumBrowser extends Application {
                 step: 100
             }
         });
+        game.settings.register(CMPBrowser.MODULE_NAME, "extrabuttons", {
+            name: game.i18n.localize("CMPBrowser.SETTING.ExtraButtons.NAME"),
+            hint: game.i18n.localize("CMPBrowser.SETTING.ExtraButtons.HINT"),
+            scope: "client",
+            config: true,
+            default: true,
+            type: Boolean
+        });
         
         // load settings from container and apply to default settings (available compendie might have changed)
         let settings = game.settings.get(CMPBrowser.MODULE_NAME, 'settings');
@@ -1608,6 +1618,9 @@ class CompendiumBrowser extends Application {
         if (CompendiumBrowser.isFoundryV10Plus) {
             featureTypes.subclass = "ITEM.TypeSubclass";
             featureTypes.background = "DND5E.Background";
+        }
+        if (CompendiumBrowser.isFoundryV11Plus) {
+            featureTypes.race = "DND5E.Race";
         }
 
         this.addFeatFilter("CMPBrowser.general", "CMPBrowser.overall", 'type', 'select',
@@ -1940,9 +1953,15 @@ class CompendiumBrowser extends Application {
     static async addTidySheetButton(cb, html, actor){
 
         await html.find('.spell-browser-btn').remove();
+        const extrabuttons = game.settings.get(CMPBrowser.MODULE_NAME, "extrabuttons") ?? true;
+        if (!extrabuttons){
+            return;
+        }
 
         let tabBar = html.find("div.tab.spellbook .spellcasting-ability")
-        const cbButton = $(`<div style="max-width:40px;min-width:32px;"><button class="compendium-browser spell-browser-btn"><i class="fa-duotone fa-book"></i></button></div>`);
+        const tooltip = game.i18n.localize("CMPBrowser.ToolTip.Spells") ?? "CMPBrowser.ToolTip.Spells"
+
+        const cbButton = $(`<div style="max-width:40px;min-width:32px;"><a title="${tooltip}" class="compendium-browser spell-browser-btn"><i class="fa-duotone fa-book"></i></a></div>`);
 
         tabBar.append(cbButton)
 
@@ -1952,9 +1971,15 @@ class CompendiumBrowser extends Application {
     static async addDefaultSheetButton(cb, html, actor){
 
         await html.find('.spell-browser-btn').remove();
+        const extrabuttons = game.settings.get(CMPBrowser.MODULE_NAME, "extrabuttons") ?? true;
+        if (!extrabuttons){
+            return;
+        }
 
         let tabBar = html.find("div.spellbook-filters")
-        const cbButton = $(`<div style="max-width:40px;min-width:32px;"><button class="compendium-browser spell-browser-btn"><i class="fa-duotone fa-book"></i></button></div>`);
+        const tooltip = game.i18n.localize("CMPBrowser.ToolTip.Spells") ?? "CMPBrowser.ToolTip.Spells"
+
+        const cbButton = $(`<div style="max-width:40px;min-width:32px;"><a title="${tooltip}" class="compendium-browser spell-browser-btn"><i class="fa-duotone fa-book"></i></a></div>`);
         console.log(tabBar)
 
         tabBar.append(cbButton)
@@ -1981,8 +2006,13 @@ class CompendiumBrowser extends Application {
 
         await html.find('.feat-browser-btn').remove();
 
+        const extrabuttons = game.settings.get(CMPBrowser.MODULE_NAME, "extrabuttons") ?? true;
+        if (!extrabuttons){
+            return;
+        }
+        const tooltip = game.i18n.localize("CMPBrowser.ToolTip.Feats") ?? "CMPBrowser.ToolTip.Feats"
         let dropArea = html.find("div.drop-area")
-        const cbButton = $(`<div style="max-width:40px;min-width:32px;"><button class="compendium-browser feat-browser-btn"><i class="fa-duotone fa-book"></i></button></div>`);
+        const cbButton = $(`<div style="max-width:40px;min-width:32px;"><a title="${tooltip}" class="compendium-browser feat-browser-btn"><i class="fa-duotone fa-book"></i></a></div>`);
 
         dropArea.append(cbButton)
 
